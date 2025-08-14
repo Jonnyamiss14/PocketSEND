@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,6 +13,29 @@ export default function CandidateLoginPage() {
   const [phone, setPhone] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const error = searchParams.get('error')
+    if (error) {
+      switch (error) {
+        case 'invalid_token':
+          toast.error('Invalid magic link. Please request a new one.')
+          break
+        case 'expired_token':
+          toast.error('Magic link has expired. Please request a new one.')
+          break
+        case 'token_used':
+          toast.error('This magic link has already been used.')
+          break
+        case 'verification_failed':
+          toast.error('Verification failed. Please try again.')
+          break
+        default:
+          toast.error('An error occurred. Please try again.')
+      }
+    }
+  }, [searchParams])
 
   const handleSendMagicLink = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,7 +58,25 @@ export default function CandidateLoginPage() {
       }
 
       setSent(true)
-      toast.success('Magic link sent! Check your WhatsApp')
+      
+      // In development, show the debug link
+      if (data.debug_link && process.env.NODE_ENV === 'development') {
+        toast.success(
+          <div>
+            <p>Magic link generated!</p>
+            <a 
+              href={data.debug_link} 
+              className="text-blue-500 underline text-sm"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Click here to test (Dev only)
+            </a>
+          </div>
+        )
+      } else {
+        toast.success('Magic link sent! Check your WhatsApp')
+      }
     } catch (error) {
       toast.error('An unexpected error occurred')
     } finally {

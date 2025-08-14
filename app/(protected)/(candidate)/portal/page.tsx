@@ -2,22 +2,67 @@ import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
-export default async function PortalPage() {
+interface PortalPageProps {
+  searchParams: {
+    candidate_id?: string
+    verified?: string
+  }
+}
+
+export default async function PortalPage({ searchParams }: PortalPageProps) {
   const supabase = await createClient()
   
+  // For authenticated candidates, use their user info
   const {
     data: { user },
   } = await supabase.auth.getUser()
+
+  // For magic link access, get candidate info
+  let candidateInfo = null
+  if (searchParams.candidate_id && searchParams.verified === 'true') {
+    const { data: candidate } = await supabase
+      .from('candidates')
+      .select(`
+        id,
+        first_name,
+        last_name,
+        phone,
+        candidate_agencies (
+          agency_id,
+          agencies (
+            name
+          )
+        )
+      `)
+      .eq('id', searchParams.candidate_id)
+      .single()
+    
+    candidateInfo = candidate
+  }
+
+  const displayName = candidateInfo 
+    ? `${candidateInfo.first_name} ${candidateInfo.last_name}`
+    : user?.email || 'Candidate'
+
+  const agencyName = candidateInfo?.candidate_agencies?.[0]?.agencies?.name
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Candidate Portal
+          Welcome, {displayName}
         </h1>
         <p className="text-gray-600">
           Your personalized SEN preparation journey
+          {agencyName && <span className="ml-2 text-teal-600">via {agencyName}</span>}
         </p>
+        {candidateInfo && (
+          <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-md">
+            <p className="text-sm text-green-700">
+              ✓ Successfully verified via magic link
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="grid md:grid-cols-2 gap-6 mb-8">

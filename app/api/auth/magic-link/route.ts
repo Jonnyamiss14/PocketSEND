@@ -13,24 +13,93 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const supabase = await createClient()
+
+    // First, find or create candidate with this phone number
+    const { data: candidate, error: candidateError } = await supabase
+      .from('candidates')
+      .select('id, first_name, last_name')
+      .eq('phone', phone)
+      .single()
+
+    if (candidateError && candidateError.code !== 'PGRST116') {
+      console.error('Database error:', candidateError)
+      return NextResponse.json(
+        { message: 'Database error occurred' },
+        { status: 500 }
+      )
+    }
+
+    let candidateId: string
+
+    if (!candidate) {
+      // Create a new candidate record
+      const { data: newCandidate, error: createError } = await supabase
+        .from('candidates')
+        .insert({
+          phone,
+          first_name: 'New',
+          last_name: 'Candidate'
+        })
+        .select('id')
+        .single()
+
+      if (createError) {
+        console.error('Error creating candidate:', createError)
+        return NextResponse.json(
+          { message: 'Failed to create candidate record' },
+          { status: 500 }
+        )
+      }
+
+      candidateId = newCandidate.id
+    } else {
+      candidateId = candidate.id
+    }
+
     // Generate secure token for magic link
     const token = crypto.randomBytes(32).toString('hex')
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000) // 1 hour from now
 
-    const supabase = await createClient()
+    // Clean up any existing unused tokens for this candidate
+    await supabase
+      .from('auth_tokens')
+      .delete()
+      .eq('candidate_id', candidateId)
+      .eq('is_used', false)
+      .eq('token_type', 'magic_link')
 
-    // For Phase 1, we'll just generate the token and return success
-    // In Phase 2, this will be stored in database and sent via Twilio
-    
-    // TODO: Store token in candidates table with expiration
-    // TODO: Send WhatsApp message via Twilio with magic link
-    
-    console.log(`Generated magic link token for ${phone}: ${token}`)
+    // Store the new token in the database
+    const { error: tokenError } = await supabase
+      .from('auth_tokens')
+      .insert({
+        candidate_id: candidateId,
+        token,
+        token_type: 'magic_link',
+        expires_at: expiresAt.toISOString(),
+        metadata: { phone, generated_at: new Date().toISOString() }
+      })
+
+    if (tokenError) {
+      console.error('Error storing auth token:', tokenError)
+      return NextResponse.json(
+        { message: 'Failed to generate magic link' },
+        { status: 500 }
+      )
+    }
+
+    // For Phase 1, we'll just log the token - Phase 2 will send via Twilio
+    console.log(`Generated magic link for ${phone}: http://localhost:5000/auth/verify/${token}`)
     console.log(`Token expires at: ${expiresAt.toISOString()}`)
 
     return NextResponse.json({
       message: 'Magic link sent successfully',
-      success: true
+      success: true,
+      // Include token in development for testing
+      ...(process.env.NODE_ENV === 'development' && { 
+        debug_token: token,
+        debug_link: `/auth/verify/${token}`
+      })
     })
 
   } catch (error) {
