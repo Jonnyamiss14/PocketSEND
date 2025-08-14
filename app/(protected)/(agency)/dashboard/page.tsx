@@ -1,23 +1,61 @@
 import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
   
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  if (!user) {
+    redirect('/login')
+  }
+
+  // Fetch agency data to verify database connection
+  const { data: agencies, error } = await supabase
+    .from('agencies')
+    .select('*')
+    .single()
+
+  if (error) {
+    console.error('Database error:', error)
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto">
+          <Card className="border-red-200">
+            <CardHeader>
+              <CardTitle className="text-2xl font-bold text-red-600">Database Connection Error</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-red-700 mb-4">Error: {error.message}</p>
+              <p className="text-sm text-gray-600 mb-4">Please ensure you've completed the database setup with the create_agency_with_user function.</p>
+              <div className="space-y-2">
+                <Button asChild>
+                  <a href="/test-auth">Run Database Tests</a>
+                </Button>
+                <Button variant="outline" asChild>
+                  <a href="/api/health" target="_blank">Check Health Status</a>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Agency Dashboard
+        <h1 className="text-3xl font-bold text-teal-600 mb-2">
+          Welcome to PocketSEND
         </h1>
-        <p className="text-gray-600">
-          Welcome back, {user?.email}
-        </p>
+        <div className="mt-4 p-4 bg-teal-50 rounded-lg border border-teal-200">
+          <p className="text-teal-800 font-medium">Agency: {agencies?.name}</p>
+          <p className="text-teal-600 text-sm">Email: {user.email}</p>
+          <p className="text-teal-600 text-sm">Status: Connected & Operational</p>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-3 gap-6 mb-8">

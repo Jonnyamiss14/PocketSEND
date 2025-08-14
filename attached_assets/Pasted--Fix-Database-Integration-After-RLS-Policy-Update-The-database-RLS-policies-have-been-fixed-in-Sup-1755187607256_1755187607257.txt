@@ -1,0 +1,216 @@
+🚨 Fix Database Integration After RLS Policy Update
+The database RLS policies have been fixed in Supabase. Now we need to update the application code to properly create agency and user records when signing up.
+✅ Already Completed
+
+SQL migrations run in Supabase Dashboard
+New auth_user_mapping table created
+RLS policies fixed with helper functions
+create_agency_with_user database function ready
+
+Current Problem
+The signup flow creates auth users but doesn't create the corresponding records in our agencies and users tables, which breaks the app since RLS policies expect these records.
+Required Code Changes
+1. Create Admin Client /lib/supabase/admin.ts:
+typescriptimport { createClient as createSupabaseClient } from '@supabase/supabase-js'
+
+export function createAdminClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error('Missing Supabase service role key')
+  }
+
+  return createSupabaseClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  })
+}
+2. Update /app/api/auth/signup/route.ts:
+Replace the entire file to properly create agency records:
+typescriptimport { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { NextRequest, NextResponse } from 'next/server'
+
+export async function POST(request: NextRequest) {
+  try {
+    const { email, password, agencyName } = await request.json()
+    
+    if (!email || !password || !agencyName) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'All fields required'
+      }, { status: 400 })
+    }
+
+    const supabase = await createClient()
+    
+    // Step 1: Create auth user
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password
+    })
+
+    if (authError || !authData.user) {
+      return NextResponse.json({ 
+        success: false, 
+        error: authError?.message || 'Signup failed'
+      }, { status: 400 })
+    }
+
+    // Step 2: Create agency and user records using the database function
+    const adminClient = createAdminClient()
+    const { data: setupData, error: setupError } = await adminClient
+      .rpc('create_agency_with_user', {
+        p_auth_id: authData.user.id,
+        p_email: email,
+        p_agency_name: agencyName
+      })
+
+    if (setupError || !setupData?.success) {
+      console.error('Setup error:', setupError)
+      return NextResponse.json({ 
+        success: true,
+        warning: 'Account created but agency setup pending. Please contact support.',
+        data: { user_id: authData.user.id, email }
+      })
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Agency account created successfully',
+      data: {
+        user_id: authData.user.id,
+        agency_id: setupData.agency_id,
+        email: authData.user.email
+      }
+    })
+
+  } catch (error) {
+    console.error('Signup error:', error)
+    return NextResponse.json({ 
+      success: false, 
+      error: 'Internal server error'
+    }, { status: 500 })
+  }
+}
+3. Get Service Role Key from User:
+Ask the user to provide their SUPABASE_SERVICE_ROLE_KEY from:
+
+Supabase Dashboard → Settings → API → Service Role Key
+
+Then add it to .env.local:
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+4. Update Dashboard Route /app/(protected)/dashboard/page.tsx:
+Add data fetching to verify the connection works:
+typescriptimport { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+
+export default async function DashboardPage() {
+  const supabase = await createClient()
+  
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  if (!user) {
+    redirect('/login')
+  }
+
+  // Fetch agency data to verify database connection
+  const { data: agencies, error } = await supabase
+    .from('agencies')
+    .select('*')
+    .single()
+
+  if (error) {
+    console.error('Database error:', error)
+    return (
+      <div className="p-8">
+        <h1 className="text-2xl font-bold text-red-600">Database Connection Error</h1>
+        <p className="mt-2">Error: {error.message}</p>
+        <p className="mt-4 text-sm">Please ensure you've completed the database setup.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="p-8">
+      <h1 className="text-2xl font-bold text-teal-600">Welcome to PocketSEND</h1>
+      <div className="mt-4 p-4 bg-teal-50 rounded-lg">
+        <p className="text-gray-700">Agency: {agencies?.name}</p>
+        <p className="text-gray-600 text-sm">Email: {user.email}</p>
+      </div>
+    </div>
+  )
+}
+5. Create Health Check Endpoint /app/api/health/route.ts:
+typescriptimport { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { NextResponse } from 'next/server'
+
+export async function GET() {
+  const checks = {
+    auth: false,
+    database: false,
+    admin: false,
+    tables: {
+      agencies: false,
+      users: false,
+      auth_user_mapping: false
+    }
+  }
+
+  try {
+    // Check auth
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    checks.auth = !!user
+
+    // Check database access
+    const { error: dbError } = await supabase.from('agencies').select('id').limit(1)
+    checks.database = !dbError
+
+    // Check admin client
+    try {
+      const admin = createAdminClient()
+      checks.admin = !!admin
+    } catch {
+      checks.admin = false
+    }
+
+    // Check tables exist
+    const tables = ['agencies', 'users', 'auth_user_mapping']
+    for (const table of tables) {
+      const { error } = await supabase.from(table).select('count').limit(1)
+      checks.tables[table as keyof typeof checks.tables] = !error
+    }
+
+    return NextResponse.json({
+      healthy: checks.auth && checks.database && checks.admin,
+      checks
+    })
+  } catch (error) {
+    return NextResponse.json({
+      healthy: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      checks
+    })
+  }
+}
+Testing Steps
+
+Add SUPABASE_SERVICE_ROLE_KEY to .env.local (get from user)
+Restart the development server
+Test the health check: curl http://localhost:3000/api/health
+Create a new agency account at /login → "Create Account" tab
+Verify login works and redirects to /dashboard
+Check Supabase Dashboard tables have new records
+
+Success Criteria
+✅ /api/health shows all checks passing
+✅ New signups create records in agencies, users, AND auth_user_mapping tables
+✅ Login works and shows agency name on dashboard
+✅ No "infinite recursion" errors in console
+If Service Role Key is Missing
+If the user doesn't provide the service role key, create a simpler version using database triggers instead (ask user for preference).

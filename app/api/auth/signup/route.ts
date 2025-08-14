@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
@@ -8,47 +9,50 @@ export async function POST(request: NextRequest) {
     if (!email || !password || !agencyName) {
       return NextResponse.json({ 
         success: false, 
-        error: 'Email, password, and agency name are required'
+        error: 'All fields required'
       }, { status: 400 })
     }
 
     const supabase = await createClient()
-
-    // Create the user account in Supabase Auth
+    
+    // Step 1: Create auth user
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
-      password,
-      options: {
-        data: {
-          agency_name: agencyName
-        }
-      }
+      password
     })
 
-    if (authError) {
-      console.error('Auth signup error:', authError)
+    if (authError || !authData.user) {
       return NextResponse.json({ 
         success: false, 
-        error: 'Failed to create account',
-        details: authError.message
+        error: authError?.message || 'Signup failed'
       }, { status: 400 })
     }
 
-    if (!authData.user) {
+    // Step 2: Create agency and user records using the database function
+    const adminClient = createAdminClient()
+    const { data: setupData, error: setupError } = await adminClient
+      .rpc('create_agency_with_user', {
+        p_auth_id: authData.user.id,
+        p_email: email,
+        p_agency_name: agencyName
+      })
+
+    if (setupError || !setupData?.success) {
+      console.error('Setup error:', setupError)
       return NextResponse.json({ 
-        success: false, 
-        error: 'Failed to create user account'
-      }, { status: 400 })
+        success: true,
+        warning: 'Account created but agency setup pending. Please contact support.',
+        data: { user_id: authData.user.id, email }
+      })
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Account created successfully',
+      message: 'Agency account created successfully',
       data: {
         user_id: authData.user.id,
-        email: authData.user.email,
-        agency_name: agencyName,
-        needs_verification: !authData.user.email_confirmed_at
+        agency_id: setupData.agency_id,
+        email: authData.user.email
       }
     })
 
@@ -56,8 +60,7 @@ export async function POST(request: NextRequest) {
     console.error('Signup error:', error)
     return NextResponse.json({ 
       success: false, 
-      error: 'Internal server error',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      error: 'Internal server error'
     }, { status: 500 })
   }
 }
