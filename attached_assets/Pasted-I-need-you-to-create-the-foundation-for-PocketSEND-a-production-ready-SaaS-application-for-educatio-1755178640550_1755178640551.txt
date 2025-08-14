@@ -1,0 +1,235 @@
+I need you to create the foundation for PocketSEND, a production-ready SaaS application for education recruitment agencies. This is Phase 1 of a multi-phase build. Focus ONLY on establishing the core architecture and authentication system.
+
+## Project Overview
+PocketSEND helps Teaching Assistants prepare for Special Educational Needs (SEN) placements through AI-powered micro-learning via WhatsApp. This is a multi-tenant B2B2C platform where agencies manage candidates who receive personalized preparation content.
+
+## Phase 1 Objectives (Complete These Only)
+1. Initialize Next.js 14 project with TypeScript and Tailwind CSS
+2. Set up Supabase client configuration with proper typing
+3. Implement authentication flows for both agency users and candidates
+4. Create the core layout structure with routing
+5. Set up environment variable management in Replit
+
+## Technical Requirements
+
+### 1. Project Initialization
+Create a new Next.js 14 project with these exact specifications:
+```bash
+npx create-next-app@latest . --typescript --tailwind --app --no-git
+Install these essential dependencies:
+bashnpm install @supabase/supabase-js @supabase/ssr @supabase/auth-helpers-nextjs react-hot-toast zustand @tanstack/react-query lucide-react
+2. Project Structure
+Create this exact folder structure:
+/app
+  /layout.tsx (root layout with providers)
+  /page.tsx (landing page)
+  /(auth)
+    /login
+      /page.tsx (agency login)
+    /candidate-login
+      /page.tsx (candidate magic link)
+  /(protected)
+    /layout.tsx (auth protection wrapper)
+    /(agency)
+      /dashboard
+        /page.tsx (agency dashboard placeholder)
+    /(candidate)
+      /portal
+        /page.tsx (candidate portal placeholder)
+  /api
+    /auth
+      /callback
+        /route.ts (Supabase auth callback)
+      /magic-link
+        /route.ts (candidate magic link generation)
+/components
+  /providers
+    /supabase-provider.tsx
+    /query-provider.tsx
+  /ui
+    /button.tsx (basic button component)
+    /card.tsx (basic card component)
+    /loading-spinner.tsx
+/lib
+  /supabase
+    /client.ts (browser client)
+    /server.ts (server client)
+    /middleware.ts (auth middleware)
+  /types
+    /database.ts (Supabase types)
+  /utils
+    /cn.ts (className utility)
+/middleware.ts (Next.js middleware for route protection)
+3. Supabase Configuration
+Create /lib/types/database.ts with these core types:
+typescriptexport type UserRole = 'admin' | 'consultant' | 'team_lead'
+
+export interface Database {
+  public: {
+    Tables: {
+      agencies: {
+        Row: {
+          id: string
+          name: string
+          whatsapp_credits: number
+          subscription_status: 'trial' | 'active' | 'suspended'
+          created_at: string
+        }
+      }
+      users: {
+        Row: {
+          id: string
+          agency_id: string
+          email: string
+          role: UserRole
+          created_at: string
+        }
+      }
+      candidates: {
+        Row: {
+          id: string
+          first_name: string
+          last_name: string
+          phone: string
+          created_at: string
+        }
+      }
+    }
+  }
+}
+Create /lib/supabase/client.ts:
+typescriptimport { createBrowserClient } from '@supabase/ssr'
+import type { Database } from '@/lib/types/database'
+
+export function createClient() {
+  return createBrowserClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
+Create /lib/supabase/server.ts for server-side operations with cookie handling.
+4. Authentication Implementation
+Create /app/(auth)/login/page.tsx with:
+
+Email/password login for agency users
+Clean, professional UI using Tailwind classes
+Error handling with toast notifications
+Redirect to /dashboard on success
+
+Create /app/(auth)/candidate-login/page.tsx with:
+
+Phone number input for candidates
+"Send Magic Link" button that calls /api/auth/magic-link
+Success message showing "Check your WhatsApp"
+
+Create /app/api/auth/magic-link/route.ts that:
+
+Accepts POST request with phone number
+Generates secure token using crypto.randomBytes(32)
+Stores token in database with 1-hour expiration
+Returns success response (Twilio integration comes in Phase 2)
+
+5. Route Protection
+Create /middleware.ts that:
+
+Checks authentication status using Supabase
+Protects all routes under /(protected)
+Redirects unauthenticated users to /login
+Allows public access to /(auth) routes
+
+6. Core UI Components
+Create /app/layout.tsx with:
+typescriptimport { Inter } from 'next/font/google'
+import { Toaster } from 'react-hot-toast'
+import './globals.css'
+
+const inter = Inter({ subsets: ['latin'] })
+
+export const metadata = {
+  title: 'PocketSEND - SEN Staff Preparation',
+  description: 'Prepare teaching assistants for success',
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en">
+      <body className={inter.className}>
+        <main className="min-h-screen bg-gradient-to-br from-teal-50 to-white">
+          {children}
+        </main>
+        <Toaster position="top-right" />
+      </body>
+    </html>
+  )
+}
+Update /app/globals.css to include:
+css@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #17A398;
+  --secondary: #FCD34D;
+  --success: #10B981;
+}
+7. Environment Configuration
+Create .replit file:
+tomlentrypoint = "package.json"
+modules = ["nodejs-20"]
+
+[nix]
+channel = "stable-23_05"
+
+[deployment]
+run = ["npm", "run", "dev"]
+deploymentTarget = "reserved-vm"
+
+[[ports]]
+localPort = 3000
+externalPort = 80
+Set these environment variables in Replit Secrets (NOT .env):
+
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
+
+8. Landing Page
+Create /app/page.tsx with:
+
+Hero section explaining PocketSEND
+Two login buttons: "Agency Login" and "Candidate Access"
+Professional design using Tailwind classes
+Mobile-responsive layout
+
+Success Criteria
+
+✅ Next.js app runs without errors on port 3000
+✅ Agency users can navigate to /login and see the login form
+✅ Candidates can navigate to /candidate-login and see phone input
+✅ Protected routes redirect to login when not authenticated
+✅ Supabase client is properly typed and configured
+✅ Toast notifications appear for errors
+✅ UI uses Teal (#17A398) as primary color consistently
+
+What NOT to Do in This Phase
+
+Don't implement Twilio/WhatsApp integration yet
+Don't create the full dashboard functionality
+Don't set up the database schema (that's Phase 2)
+Don't implement AI features
+Don't add payment processing
+Don't create all UI components
+
+Important Notes
+
+Use 'use client' directive for client components
+All API routes should use Next.js 14 App Router conventions
+Maintain consistent error handling throughout
+Use TypeScript strictly - no 'any' types
+Keep components simple and focused for now
+
+Start by initializing the project, then work through each requirement methodically. Confirm each step works before moving to the next.
