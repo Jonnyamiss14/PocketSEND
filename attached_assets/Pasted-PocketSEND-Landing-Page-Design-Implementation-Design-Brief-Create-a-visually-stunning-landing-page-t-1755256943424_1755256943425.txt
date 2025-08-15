@@ -1,0 +1,429 @@
+PocketSEND Landing Page Design Implementation
+Design Brief
+Create a visually stunning landing page that immediately communicates trust, reduces anxiety, and inspires confidence for Teaching Assistants entering the Special Educational Needs field. The design should feel welcoming, professional, and achievable.
+Core Design Principles to Establish
+1. Visual Hierarchy - "Clarity Through Simplicity"
+
+Hero First: Large, confident headline that immediately addresses user needs
+Progressive Information: Information reveals in digestible chunks
+Clear CTAs: Two distinct paths (Candidate vs Agency) with visual separation
+Breathing Room: Generous whitespace to reduce cognitive load
+
+2. Color Psychology Implementation
+css/* Establish emotional color journey */
+:root {
+  /* Primary - Trust & Professionalism */
+  --brand-teal: #17A398;
+  --brand-teal-dark: #0891B2;
+  --brand-teal-light: #22C5B8;
+  
+  /* Secondary - Achievement & Optimism */
+  --gold-accent: #FCD34D;
+  --gold-light: #FDE68A;
+  --gold-dark: #F59E0B;
+  
+  /* Supporting - Success & Growth */
+  --success-green: #10B981;
+  --success-light: #34D399;
+  
+  /* Foundations */
+  --surface-white: #FFFFFF;
+  --surface-light: #F0FDFA;
+  --surface-soft: #E6FFFA;
+  
+  /* Text Hierarchy */
+  --text-heading: #0F172A;
+  --text-body: #334155;
+  --text-muted: #64748B;
+  --text-inverse: #FFFFFF;
+  
+  /* Subtle Borders */
+  --border-light: #E2E8F0;
+  --border-default: #CBD5E1;
+}
+3. Typography System
+css@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap');
+
+/* Type Scale - Mobile First */
+.display-hero {
+  font-family: 'Noto Sans', sans-serif;
+  font-weight: 800;
+  font-size: clamp(32px, 8vw, 56px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--text-heading);
+}
+
+.heading-xl {
+  font-family: 'Noto Sans', sans-serif;
+  font-weight: 700;
+  font-size: clamp(28px, 6vw, 40px);
+  line-height: 1.2;
+  color: var(--text-heading);
+}
+
+.heading-lg {
+  font-family: 'Noto Sans', sans-serif;
+  font-weight: 600;
+  font-size: clamp(24px, 4vw, 32px);
+  line-height: 1.3;
+  color: var(--text-heading);
+}
+
+.body-lead {
+  font-family: 'Noto Sans', sans-serif;
+  font-weight: 400;
+  font-size: clamp(18px, 2.5vw, 20px);
+  line-height: 1.6;
+  color: var(--text-body);
+}
+
+.body-default {
+  font-family: 'Noto Sans', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text-body);
+}
+
+.button-text {
+  font-family: 'Noto Sans', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: 0.025em;
+}
+4. Landing Page Specific Components
+Hero Section Design
+css.hero-section {
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--surface-light) 0%, var(--surface-white) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle Background Pattern */
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -25%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, var(--brand-teal) 0%, transparent 70%);
+  opacity: 0.05;
+  border-radius: 50%;
+}
+
+/* Floating Accent Shapes */
+.hero-accent {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.1;
+  animation: float 20s ease-in-out infinite;
+}
+
+.hero-accent--gold {
+  background: var(--gold-accent);
+  width: 300px;
+  height: 300px;
+  top: 10%;
+  left: -5%;
+  animation-delay: 0s;
+}
+
+.hero-accent--teal {
+  background: var(--brand-teal);
+  width: 200px;
+  height: 200px;
+  bottom: 20%;
+  right: -10%;
+  animation-delay: 5s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30px, -30px) scale(1.05); }
+  50% { transform: translate(-20px, 20px) scale(0.95); }
+  75% { transform: translate(20px, 30px) scale(1.02); }
+}
+Split Path Cards (Candidate vs Agency)
+css.path-card {
+  background: var(--surface-white);
+  border: 2px solid var(--border-light);
+  border-radius: 16px;
+  padding: 32px;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+/* Candidate Card - Warm & Inviting */
+.path-card--candidate {
+  background: linear-gradient(135deg, var(--surface-white) 0%, var(--surface-soft) 100%);
+}
+
+.path-card--candidate::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--gold-accent) 0%, var(--gold-light) 100%);
+}
+
+.path-card--candidate:hover {
+  transform: translateY(-8px);
+  box-shadow: 
+    0 20px 40px rgba(252, 211, 77, 0.15),
+    0 10px 20px rgba(252, 211, 77, 0.1);
+  border-color: var(--gold-accent);
+}
+
+/* Agency Card - Professional & Trustworthy */
+.path-card--agency {
+  background: linear-gradient(135deg, var(--surface-white) 0%, #F0FFFE 100%);
+}
+
+.path-card--agency::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--brand-teal) 0%, var(--brand-teal-dark) 100%);
+}
+
+.path-card--agency:hover {
+  transform: translateY(-8px);
+  box-shadow: 
+    0 20px 40px rgba(23, 163, 152, 0.15),
+    0 10px 20px rgba(23, 163, 152, 0.1);
+  border-color: var(--brand-teal);
+}
+Button System
+css/* Primary CTA - High Emphasis */
+.btn-primary {
+  background: linear-gradient(135deg, var(--brand-teal) 0%, var(--brand-teal-dark) 100%);
+  color: var(--text-inverse);
+  padding: 16px 32px;
+  border-radius: 8px;
+  border: none;
+  font-family: 'Noto Sans', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: 0.025em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%) scale(0);
+  border-radius: 50%;
+  transition: transform 0.5s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(23, 163, 152, 0.3);
+}
+
+.btn-primary:hover::before {
+  transform: translate(-50%, -50%) scale(2);
+}
+
+/* Secondary CTA - For Alternative Actions */
+.btn-secondary {
+  background: var(--surface-white);
+  color: var(--brand-teal);
+  border: 2px solid var(--brand-teal);
+  padding: 16px 32px;
+  border-radius: 8px;
+  font-family: 'Noto Sans', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: var(--brand-teal);
+  color: var(--text-inverse);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(23, 163, 152, 0.2);
+}
+
+/* Gold Accent CTA - Special Emphasis */
+.btn-gold {
+  background: linear-gradient(135deg, var(--gold-accent) 0%, var(--gold-dark) 100%);
+  color: var(--text-heading);
+  padding: 16px 32px;
+  border-radius: 8px;
+  border: none;
+  font-family: 'Noto Sans', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(252, 211, 77, 0.3);
+}
+
+.btn-gold:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 30px rgba(252, 211, 77, 0.4);
+}
+5. Micro-Interactions & Animations
+css/* Entrance Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-on-scroll {
+  opacity: 0;
+  animation: fadeInUp 0.8s ease forwards;
+}
+
+.animate-delay-1 { animation-delay: 0.1s; }
+.animate-delay-2 { animation-delay: 0.2s; }
+.animate-delay-3 { animation-delay: 0.3s; }
+
+/* Trust Indicators */
+.trust-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--surface-soft);
+  border-radius: 100px;
+  font-size: 14px;
+  color: var(--text-muted);
+  border: 1px solid var(--border-light);
+}
+
+.trust-badge--secure {
+  color: var(--success-green);
+  border-color: var(--success-light);
+  background: rgba(16, 185, 129, 0.05);
+}
+6. Responsive Grid System
+css.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.grid {
+  display: grid;
+  gap: 24px;
+}
+
+.grid--two-column {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding: 0 32px;
+  }
+  
+  .grid--two-column {
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: 0 40px;
+  }
+  
+  .grid--two-column {
+    gap: 48px;
+  }
+}
+7. Form Design for Login/Signup
+css.form-group {
+  margin-bottom: 24px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-family: 'Noto Sans', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--text-heading);
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--border-light);
+  border-radius: 8px;
+  font-family: 'Noto Sans', sans-serif;
+  font-size: 16px;
+  color: var(--text-body);
+  background: var(--surface-white);
+  transition: all 0.2s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--brand-teal);
+  box-shadow: 0 0 0 3px rgba(23, 163, 152, 0.1);
+}
+
+.form-input--error {
+  border-color: #EF4444;
+}
+
+.form-helper {
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.form-error {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #EF4444;
+}
+Implementation Instructions for Replit
+
+Create a CSS file (/styles/design-system.css) with all the above styles
+Import Google Fonts in the main layout
+Apply the design system consistently across all landing/login pages
+Use CSS variables for all colors to maintain consistency
+Test responsive behavior at all breakpoints
+Ensure accessibility with proper contrast ratios and focus states
+Save this design system as the foundation for all future screens
+
+Key Design Decisions
+
+Gradient backgrounds create depth without overwhelming
+Floating accent shapes add movement and life
+Card hover effects provide satisfying feedback
+Generous whitespace reduces cognitive load
+Clear visual hierarchy guides user attention
+Consistent border radius (8px for inputs/buttons, 16px for cards)
+Subtle shadows for depth without harshness
+
+This design system establishes trust through professional presentation while maintaining warmth through color choices and micro-interactions. The landing page should feel like a confident first step rather than an intimidating challenge.
