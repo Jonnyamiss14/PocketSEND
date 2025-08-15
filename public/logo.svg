@@ -1,0 +1,14 @@
+<svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Phone Icon -->
+  <rect x="10" y="8" width="30" height="44" rx="6" ry="6" fill="#17A398" stroke="#17A398" stroke-width="2"/>
+  <rect x="13" y="13" width="24" height="32" rx="2" ry="2" fill="#ffffff"/>
+  
+  <!-- Plant/Leaf growing from phone -->
+  <path d="M27 20 Q30 15, 35 18 Q38 20, 35 25 Q32 27, 27 24" fill="#22C5B8"/>
+  <path d="M27 24 Q24 19, 20 22 Q18 24, 20 28 Q23 30, 27 27" fill="#0F8B80"/>
+  <line x1="27" y1="25" x2="27" y2="35" stroke="#17A398" stroke-width="2"/>
+  
+  <!-- PocketSEND Text -->
+  <text x="55" y="25" font-family="Noto Sans, sans-serif" font-size="18" font-weight="700" fill="#17A398">Pocket</text>
+  <text x="55" y="45" font-family="Noto Sans, sans-serif" font-size="18" font-weight="700" fill="#17A398">SEND</text>
+</svg>
