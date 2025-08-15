@@ -14,18 +14,59 @@ export default function HomePage() {
           Prepare Teaching Assistants for Special Educational Needs placements through 
           AI-powered micro-learning via WhatsApp
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <Link href="/login">
-            <Button size="lg" className="bg-teal-600 hover:bg-teal-700 text-white px-8 py-3">
-              Agency Login
-            </Button>
-          </Link>
-          <Link href="/candidate-login">
-            <Button size="lg" variant="outline" className="border-teal-600 text-teal-600 hover:bg-teal-50 px-8 py-3">
-              Candidate Access
-            </Button>
-          </Link>
-        </div>
+      </div>
+
+      {/* Signup Options */}
+      <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-16">
+        <Card className="text-center hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <CardTitle className="text-2xl text-teal-600">For Agencies</CardTitle>
+            <CardDescription>
+              Manage and prepare your candidates for SEN placements
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <ul className="text-left text-sm text-gray-600 space-y-2">
+              <li>✅ Manage multiple candidates</li>
+              <li>✅ Track preparation progress</li>
+              <li>✅ Automated WhatsApp delivery</li>
+              <li>✅ School-specific training</li>
+            </ul>
+            <Link href="/login">
+              <Button size="lg" className="w-full bg-teal-600 hover:bg-teal-700">
+                Sign In as Agency
+              </Button>
+            </Link>
+            <p className="text-xs text-gray-500">
+              New agency? <Link href="/signup" className="text-teal-600 hover:underline">Create account</Link>
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="text-center hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <CardTitle className="text-2xl text-teal-600">For Candidates</CardTitle>
+            <CardDescription>
+              Get personalized SEN training delivered to your phone
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <ul className="text-left text-sm text-gray-600 space-y-2">
+              <li>📱 WhatsApp-based learning</li>
+              <li>🎯 Personalized content</li>
+              <li>🏆 Track achievements</li>
+              <li>💬 AI practice scenarios</li>
+            </ul>
+            <Link href="/candidate-signup">
+              <Button size="lg" className="w-full bg-teal-600 hover:bg-teal-700">
+                Join as Candidate
+              </Button>
+            </Link>
+            <p className="text-xs text-gray-500">
+              Already registered? <Link href="/candidate-login" className="text-teal-600 hover:underline">Access with Magic Link</Link>
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Features Section */}
