@@ -1,0 +1,121 @@
+Fix Database Schema Error for Candidate Signup
+Problem Identified
+The error "Could not find the 'password_hash' column of 'candidates' in the schema cache" indicates that the database table doesn't have the password_hash column that the application is trying to use.
+Solution Steps
+1. Update Database Schema Migration
+Create or update the migration file to add the password_hash column to the candidates table.
+Create a new migration file: /migrations/add_password_to_candidates.sql
+sql-- Add password_hash column to candidates table
+ALTER TABLE candidates 
+ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);
+
+-- Remove experience_level column if it exists (no longer needed)
+ALTER TABLE candidates 
+DROP COLUMN IF EXISTS experience_level;
+
+-- Ensure all required columns exist
+ALTER TABLE candidates 
+ADD COLUMN IF NOT EXISTS first_name VARCHAR(255),
+ADD COLUMN IF NOT EXISTS last_name VARCHAR(255),
+ADD COLUMN IF NOT EXISTS email VARCHAR(255) UNIQUE,
+ADD COLUMN IF NOT EXISTS mobile_number VARCHAR(50),
+ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+2. Update Drizzle Schema File
+Update /shared/schema.ts to ensure the candidates table includes password_hash:
+typescriptimport { pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+
+export const candidates = pgTable('candidates', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  firstName: varchar('first_name', { length: 255 }).notNull(),
+  lastName: varchar('last_name', { length: 255 }).notNull(),
+  email: varchar('email', { length: 255 }).unique().notNull(),
+  mobileNumber: varchar('mobile_number', { length: 50 }).notNull(),
+  passwordHash: varchar('password_hash', { length: 255 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+3. Run Database Push/Migration
+After updating the schema, run one of these commands in the terminal:
+bash# If using Drizzle push (recommended for development)
+npx drizzle-kit push:pg
+
+# Or if using migrations
+npx drizzle-kit generate:pg
+npx drizzle-kit migrate:pg
+4. Clear Schema Cache
+Sometimes the schema cache needs to be cleared. Restart your application:
+bash# Stop the application (Ctrl+C)
+# Then restart it
+npm run dev
+5. Verify API Route
+Ensure /app/api/auth/candidate-signup/route.ts correctly references the schema:
+typescriptimport { candidates } from '@/shared/schema';
+import bcrypt from 'bcryptjs';
+import { db } from '@/db/drizzle';
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { firstName, lastName, email, mobileNumber, password } = body;
+
+    // Hash the password
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Insert into database with correct column names
+    const [candidate] = await db
+      .insert(candidates)
+      .values({
+        firstName,
+        lastName,
+        email,
+        mobileNumber,
+        passwordHash, // Make sure this matches the schema column name
+      })
+      .returning();
+
+    return Response.json({ 
+      success: true, 
+      message: 'Account created successfully',
+      candidateId: candidate.id 
+    });
+  } catch (error) {
+    console.error('Candidate creation error:', error);
+    return Response.json(
+      { error: 'Failed to create account' },
+      { status: 500 }
+    );
+  }
+}
+6. Alternative Quick Fix (If Migration Fails)
+If you need a quick fix, you can also try renaming the column in your code to match what exists in the database:
+Check what columns actually exist in your database:
+sql-- Run this query in your database to see actual columns
+SELECT column_name 
+FROM information_schema.columns 
+WHERE table_name = 'candidates';
+Then update your code to match the actual column name (e.g., if the column is named password instead of password_hash).
+Testing After Fix
+
+Clear any browser cache/cookies
+Try signing up again with the form
+Check the console for any new error messages
+Verify in database that the candidate record was created
+
+Additional Debugging Commands
+bash# Check if bcryptjs is installed
+npm list bcryptjs
+
+# Reinstall if needed
+npm install bcryptjs @types/bcryptjs
+
+# Check database connection
+npx drizzle-kit studio
+If the Problem Persists
+Please provide:
+
+The output of the database column check query above
+The contents of your current /shared/schema.ts file
+Any error messages from running the migration commands
+
+This should resolve the password_hash column error and allow candidates to sign up successfully.
