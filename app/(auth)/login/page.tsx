@@ -4,14 +4,12 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function LoginPage() {
+  const [activeTab, setActiveTab] = useState<'signin' | 'create'>('signin')
+  
   // Login form state
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -75,135 +73,130 @@ export default function LoginPage() {
         return
       }
 
-      toast.success('Account created successfully! Please check your email to verify.')
-      
-      // Switch to login tab and pre-fill email
-      setEmail(signupEmail)
+      toast.success('Account created successfully!')
+      setActiveTab('signin')
       setSignupEmail('')
       setSignupPassword('')
       setAgencyName('')
-      
     } catch (error) {
-      toast.error('An unexpected error occurred during signup')
+      toast.error('An unexpected error occurred')
     } finally {
       setSignupLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl text-teal-600">PocketSEND Agency</CardTitle>
-          <CardDescription>
-            Sign in or create your agency account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Create Account</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="login" className="space-y-4 mt-4">
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your-email@agency.com"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    required
-                    disabled={loading}
-                  />
-                </div>
+    <div className="auth-container">
+      <div className="auth-card">
+        <div className="auth-header">
+          <h1 className="auth-title">PocketSEND Agency</h1>
+          <p className="auth-subtitle">Sign in or create your agency account</p>
+        </div>
 
-                <Button
-                  type="submit"
-                  className="w-full bg-teal-600 hover:bg-teal-700"
-                  disabled={loading}
-                >
-                  {loading ? 'Signing in...' : 'Sign In'}
-                </Button>
-              </form>
-            </TabsContent>
-            
-            <TabsContent value="signup" className="space-y-4 mt-4">
-              <form onSubmit={handleSignup} className="space-y-4">
-                <div>
-                  <Label htmlFor="agencyName">Agency Name</Label>
-                  <Input
-                    id="agencyName"
-                    type="text"
-                    value={agencyName}
-                    onChange={(e) => setAgencyName(e.target.value)}
-                    placeholder="Your Agency Name Ltd"
-                    required
-                    disabled={signupLoading}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="signupEmail">Email</Label>
-                  <Input
-                    id="signupEmail"
-                    type="email"
-                    value={signupEmail}
-                    onChange={(e) => setSignupEmail(e.target.value)}
-                    placeholder="admin@youragency.com"
-                    required
-                    disabled={signupLoading}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="signupPassword">Password</Label>
-                  <Input
-                    id="signupPassword"
-                    type="password"
-                    value={signupPassword}
-                    onChange={(e) => setSignupPassword(e.target.value)}
-                    placeholder="Create a strong password"
-                    required
-                    disabled={signupLoading}
-                    minLength={6}
-                  />
-                </div>
+        <div className="tab-switcher">
+          <button 
+            className={`tab-button ${activeTab === 'signin' ? 'active' : ''}`}
+            onClick={() => setActiveTab('signin')}
+          >
+            Sign In
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'create' ? 'active' : ''}`}
+            onClick={() => setActiveTab('create')}
+          >
+            Create Account
+          </button>
+        </div>
 
-                <Button
-                  type="submit"
-                  className="w-full bg-teal-600 hover:bg-teal-700"
-                  disabled={signupLoading}
-                >
-                  {signupLoading ? 'Creating account...' : 'Create Account'}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+        {activeTab === 'signin' ? (
+          <form onSubmit={handleLogin} className="auth-form">
+            <div className="form-group">
+              <label className="form-label">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your-email@agency.com"
+                className="form-input"
+                required
+              />
+            </div>
 
-          <div className="mt-4 text-center">
-            <Link href="/" className="text-sm text-teal-600 hover:underline">
-              ← Back to home
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+            <div className="form-group">
+              <label className="form-label">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                className="form-input"
+                required
+              />
+            </div>
+
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="btn-auth"
+            >
+              {loading ? 'Signing In...' : 'Sign In'}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleSignup} className="auth-form">
+            <div className="form-group">
+              <label className="form-label">Agency Name</label>
+              <input
+                type="text"
+                value={agencyName}
+                onChange={(e) => setAgencyName(e.target.value)}
+                placeholder="Your Agency Name"
+                className="form-input"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Email</label>
+              <input
+                type="email"
+                value={signupEmail}
+                onChange={(e) => setSignupEmail(e.target.value)}
+                placeholder="your-email@agency.com"
+                className="form-input"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Password</label>
+              <input
+                type="password"
+                value={signupPassword}
+                onChange={(e) => setSignupPassword(e.target.value)}
+                placeholder="Create a password"
+                className="form-input"
+                required
+              />
+            </div>
+
+            <button 
+              type="submit" 
+              disabled={signupLoading}
+              className="btn-auth"
+            >
+              {signupLoading ? 'Creating Account...' : 'Create Account'}
+            </button>
+          </form>
+        )}
+
+        <div className="back-link">
+          <Link href="/">
+            <ArrowLeft className="w-4 h-4" />
+            Back to home
+          </Link>
+        </div>
+      </div>
     </div>
   )
 }

@@ -3,10 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function CandidateSignupPage() {
@@ -17,8 +14,6 @@ export default function CandidateSignupPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordError, setPasswordError] = useState('')
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
@@ -60,8 +55,7 @@ export default function CandidateSignupPage() {
       const data = await response.json()
 
       if (response.ok) {
-        setError('')
-        setSuccess('Account created successfully! Redirecting to login...')
+        toast.success('Account created successfully! Redirecting to login...')
         
         // Clear form
         setFirstName('')
@@ -71,143 +65,129 @@ export default function CandidateSignupPage() {
         setPassword('')
         setConfirmPassword('')
         
-        // Redirect to login after 2 seconds
+        // Redirect to candidate login after 2 seconds
         setTimeout(() => {
           router.push('/candidate-login')
         }, 2000)
       } else {
-        setError(data.error || 'Failed to create account')
-        setSuccess('')
+        toast.error(data.error || 'Failed to create account')
       }
     } catch (error) {
-      setError('An unexpected error occurred')
-      setSuccess('')
+      toast.error('An unexpected error occurred')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-teal-50 to-white">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl text-teal-600">Join PocketSEND as a Candidate</CardTitle>
-          <CardDescription>
-            Start your journey to becoming an outstanding SEN professional
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="firstName">First Name</Label>
-                <Input
-                  id="firstName"
-                  type="text"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="First Name"
-                  required
-                  disabled={loading}
-                />
-              </div>
-              <div>
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input
-                  id="lastName"
-                  type="text"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Last Name"
-                  required
-                  disabled={loading}
-                />
-              </div>
-            </div>
+    <div className="auth-container">
+      <div className="auth-card">
+        <div className="auth-header">
+          <h1 className="auth-title">Join PocketSEND as a Candidate</h1>
+          <p className="auth-subtitle">Start your journey to becoming an outstanding SEN professional</p>
+        </div>
 
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your.email@example.com"
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="mobileNumber">Mobile Number</Label>
-              <Input
-                id="mobileNumber"
-                type="tel"
-                value={mobileNumber}
-                onChange={(e) => setMobileNumber(e.target.value)}
-                placeholder="+44 7700 900000"
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password (min 8 characters)"
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm Password"
-                required
-                disabled={loading}
-              />
-            </div>
-
-            {passwordError && (
-              <p className="text-sm text-red-600">{passwordError}</p>
-            )}
-
-            {error && (
-              <p className="text-sm text-red-600">{error}</p>
-            )}
-
-            {success && (
-              <p className="text-sm text-green-600">{success}</p>
-            )}
-
-            <Button
-              type="submit"
-              className="w-full bg-teal-600 hover:bg-teal-700"
-              disabled={loading}
-            >
-              {loading ? 'Creating account...' : 'Sign Up'}
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center space-y-2">
-            <Link href="/candidate-login" className="block text-sm text-teal-600 hover:underline">
-              Already have an account? Sign in
-            </Link>
-            <Link href="/login" className="block text-sm text-gray-600 hover:underline">
-              Are you an agency? Sign in here
-            </Link>
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-group">
+            <label className="form-label">First Name</label>
+            <input
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="First Name"
+              className="form-input"
+              required
+            />
           </div>
-        </CardContent>
-      </Card>
+
+          <div className="form-group">
+            <label className="form-label">Last Name</label>
+            <input
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Last Name"
+              className="form-input"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your.email@example.com"
+              className="form-input"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Mobile Number</label>
+            <input
+              type="tel"
+              value={mobileNumber}
+              onChange={(e) => setMobileNumber(e.target.value)}
+              placeholder="+44 7700 900000"
+              className="form-input"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password (min 8 characters)"
+              className="form-input"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Confirm Password</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm Password"
+              className="form-input"
+              required
+            />
+            {passwordError && (
+              <span style={{ color: 'red', fontSize: '14px' }}>{passwordError}</span>
+            )}
+          </div>
+
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="btn-auth"
+          >
+            {loading ? 'Creating Account...' : 'Sign Up'}
+          </button>
+        </form>
+
+        <div className="auth-links">
+          <Link href="/candidate-login" className="auth-link">
+            Already have an account? Sign in
+          </Link>
+          <Link href="/login" className="auth-link">
+            Are you an agency? Sign in here
+          </Link>
+        </div>
+
+        <div className="back-link">
+          <Link href="/">
+            <ArrowLeft className="w-4 h-4" />
+            Back to home
+          </Link>
+        </div>
+      </div>
     </div>
   )
 }
