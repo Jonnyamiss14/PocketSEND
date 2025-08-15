@@ -1,0 +1,427 @@
+🚀 Implement Candidate Self-Signup with Magic Link Authentication
+Context
+Currently, PocketSEND only has agency signup. We need to add candidate self-registration with phone-based magic link authentication via WhatsApp.
+Implementation Steps
+1. Create Candidate Signup Page (/app/(auth)/candidate-signup/page.tsx)
+typescript'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import toast from 'react-hot-toast'
+
+export default function CandidateSignupPage() {
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    experienceLevel: 'new',
+    agencyCode: '' // Optional agency invite code
+  })
+  const [loading, setLoading] = useState(false)
+  const router = useRouter()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+
+    try {
+      const response = await fetch('/api/auth/candidate-signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      })
+
+      const result = await response.json()
+
+      if (!result.success) {
+        toast.error(result.error || 'Signup failed')
+        return
+      }
+
+      toast.success('Account created! Check WhatsApp for your magic link.')
+      router.push('/candidate-login')
+    } catch (error) {
+      toast.error('An unexpected error occurred')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-teal-50 to-white">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl text-teal-600">Join PocketSEND as a Candidate</CardTitle>
+          <CardDescription>
+            Start your journey to becoming an outstanding SEN professional
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  type="text"
+                  value={formData.firstName}
+                  onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+                  required
+                  disabled={loading}
+                />
+              </div>
+              <div>
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  type="text"
+                  value={formData.lastName}
+                  onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                  required
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="email">Email (Optional)</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                placeholder="your.email@example.com"
+                disabled={loading}
+              />
+              <p className="text-xs text-gray-500 mt-1">For important updates only</p>
+            </div>
+
+            <div>
+              <Label htmlFor="phone">WhatsApp Phone Number</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                placeholder="+44 7700 900000"
+                required
+                disabled={loading}
+              />
+              <p className="text-xs text-gray-500 mt-1">We'll send your magic link here</p>
+            </div>
+
+            <div>
+              <Label htmlFor="experience">Experience Level</Label>
+              <Select 
+                value={formData.experienceLevel} 
+                onValueChange={(value) => setFormData({...formData, experienceLevel: value})}
+                disabled={loading}
+              >
+                <SelectTrigger id="experience">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="new">New to SEN (0-1 years)</SelectItem>
+                  <SelectItem value="some">Some Experience (1-3 years)</SelectItem>
+                  <SelectItem value="experienced">Experienced (3+ years)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="agencyCode">Agency Invite Code (Optional)</Label>
+              <Input
+                id="agencyCode"
+                type="text"
+                value={formData.agencyCode}
+                onChange={(e) => setFormData({...formData, agencyCode: e.target.value})}
+                placeholder="Enter if provided by your agency"
+                disabled={loading}
+              />
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full bg-teal-600 hover:bg-teal-700"
+              disabled={loading}
+            >
+              {loading ? 'Creating account...' : 'Create Candidate Account'}
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center space-y-2">
+            <Link href="/candidate-login" className="block text-sm text-teal-600 hover:underline">
+              Already registered? Access with magic link
+            </Link>
+            <Link href="/signup" className="block text-sm text-gray-600 hover:underline">
+              Are you an agency? Sign up here
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+2. Create Candidate Signup API Route (/app/api/auth/candidate-signup/route.ts)
+typescriptimport { createAdminClient } from '@/lib/supabase/admin'
+import { NextRequest, NextResponse } from 'next/server'
+import crypto from 'crypto'
+
+export async function POST(request: NextRequest) {
+  try {
+    const { firstName, lastName, email, phone, experienceLevel, agencyCode } = await request.json()
+    
+    if (!firstName || !lastName || !phone) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'First name, last name, and phone are required'
+      }, { status: 400 })
+    }
+
+    const adminClient = createAdminClient()
+    
+    // Check if candidate already exists
+    const { data: existingCandidate } = await adminClient
+      .from('candidates')
+      .select('id')
+      .eq('phone', phone)
+      .single()
+
+    if (existingCandidate) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'A candidate with this phone number already exists'
+      }, { status: 400 })
+    }
+
+    // Create candidate record
+    const { data: candidate, error: candidateError } = await adminClient
+      .from('candidates')
+      .insert({
+        first_name: firstName,
+        last_name: lastName,
+        email: email || null,
+        phone: phone,
+        experience_level: experienceLevel,
+        confidence_level: experienceLevel === 'new' ? 30 : experienceLevel === 'some' ? 50 : 70,
+        is_active: true
+      })
+      .select()
+      .single()
+
+    if (candidateError) {
+      console.error('Candidate creation error:', candidateError)
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Failed to create candidate account'
+      }, { status: 500 })
+    }
+
+    // If agency code provided, link to agency
+    if (agencyCode) {
+      // Verify agency code (could be a special invite code)
+      const { data: agency } = await adminClient
+        .from('agencies')
+        .select('id')
+        .eq('invite_code', agencyCode)
+        .single()
+
+      if (agency) {
+        await adminClient
+          .from('candidate_agencies')
+          .insert({
+            candidate_id: candidate.id,
+            agency_id: agency.id,
+            status: 'active'
+          })
+      }
+    }
+
+    // Generate and store magic link token
+    const token = crypto.randomBytes(32).toString('hex')
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+
+    await adminClient
+      .from('auth_tokens')
+      .insert({
+        candidate_id: candidate.id,
+        token: token,
+        token_type: 'magic_link',
+        expires_at: expiresAt.toISOString()
+      })
+
+    // Send welcome email if email provided
+    if (email) {
+      // Queue welcome email (implement email service)
+      console.log('Queue welcome email for:', email)
+    }
+
+    // Send WhatsApp magic link (in production, use Twilio)
+    const magicLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify/${token}`
+    console.log(`WhatsApp message to ${phone}: Welcome to PocketSEND! Access your portal: ${magicLink}`)
+
+    return NextResponse.json({
+      success: true,
+      message: 'Candidate account created successfully',
+      data: {
+        candidate_id: candidate.id,
+        phone: phone,
+        debug_link: process.env.NODE_ENV === 'development' ? magicLink : undefined
+      }
+    })
+
+  } catch (error) {
+    console.error('Candidate signup error:', error)
+    return NextResponse.json({ 
+      success: false, 
+      error: 'Internal server error'
+    }, { status: 500 })
+  }
+}
+3. Update Homepage (/app/page.tsx) with Dual Signup Options
+typescriptimport Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+
+export default function HomePage() {
+  return (
+    <div className="container mx-auto px-4 py-16">
+      {/* Hero Section */}
+      <div className="text-center mb-16">
+        <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+          Pocket<span className="text-teal-600">SEND</span>
+        </h1>
+        <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          Prepare Teaching Assistants for Special Educational Needs placements through 
+          AI-powered micro-learning via WhatsApp
+        </p>
+      </div>
+
+      {/* Signup Options */}
+      <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-16">
+        <Card className="text-center hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <CardTitle className="text-2xl text-teal-600">For Agencies</CardTitle>
+            <CardDescription>
+              Manage and prepare your candidates for SEN placements
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <ul className="text-left text-sm text-gray-600 space-y-2">
+              <li>✅ Manage multiple candidates</li>
+              <li>✅ Track preparation progress</li>
+              <li>✅ Automated WhatsApp delivery</li>
+              <li>✅ School-specific training</li>
+            </ul>
+            <Link href="/signup">
+              <Button size="lg" className="w-full bg-teal-600 hover:bg-teal-700">
+                Sign Up as Agency
+              </Button>
+            </Link>
+            <Link href="/login">
+              <Button size="sm" variant="outline" className="w-full">
+                Already have an account? Sign In
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="text-center hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <CardTitle className="text-2xl text-teal-600">For Candidates</CardTitle>
+            <CardDescription>
+              Get personalized SEN training delivered to your phone
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <ul className="text-left text-sm text-gray-600 space-y-2">
+              <li>📱 WhatsApp-based learning</li>
+              <li>🎯 Personalized content</li>
+              <li>🏆 Track achievements</li>
+              <li>💬 AI practice scenarios</li>
+            </ul>
+            <Link href="/candidate-signup">
+              <Button size="lg" className="w-full bg-teal-600 hover:bg-teal-700">
+                Join as Candidate
+              </Button>
+            </Link>
+            <Link href="/candidate-login">
+              <Button size="sm" variant="outline" className="w-full">
+                Access with Magic Link
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Features Section */}
+      <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <Card className="text-center">
+          <CardHeader>
+            <CardTitle className="text-teal-600">AI-Powered Learning</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="text-gray-600">
+              Personalized preparation content delivered through intelligent micro-learning modules
+            </CardDescription>
+          </CardContent>
+        </Card>
+
+        <Card className="text-center">
+          <CardHeader>
+            <CardTitle className="text-teal-600">WhatsApp Integration</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="text-gray-600">
+              Seamless delivery of training materials directly to candidates' phones
+            </CardDescription>
+          </CardContent>
+        </Card>
+
+        <Card className="text-center">
+          <CardHeader>
+            <CardTitle className="text-teal-600">Multi-Tenant Platform</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CardDescription className="text-gray-600">
+              Complete B2B2C solution for recruitment agencies managing multiple candidates
+            </CardDescription>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
+4. Add Select Component (/components/ui/select.tsx)
+If not already present, add the Select component from shadcn/ui:
+bashnpx shadcn-ui@latest add select
+5. Update Database Schema
+Add invite_code field to agencies table in Supabase:
+sqlALTER TABLE agencies ADD COLUMN invite_code VARCHAR(20) UNIQUE;
+
+-- Generate invite codes for existing agencies
+UPDATE agencies 
+SET invite_code = UPPER(SUBSTRING(MD5(RANDOM()::TEXT), 1, 8))
+WHERE invite_code IS NULL;
+Testing Steps
+
+Navigate to /candidate-signup to test candidate registration
+Fill in all required fields
+Check that magic link is generated (in dev, it will show in response)
+Test accessing portal with magic link at /candidate-login
+Verify candidate record is created in Supabase
+
+Email Configuration in Supabase
+
+Go to Authentication → Email Templates
+Add custom template for candidate welcome
+Set up SMTP settings if using custom domain
+
+This implementation provides a complete dual-signup system with separate flows for agencies and candidates, maintaining the existing agency functionality while adding self-service candidate registration.
