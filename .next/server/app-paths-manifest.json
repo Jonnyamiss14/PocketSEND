@@ -1,9 +1,3 @@
 {
-  "/api/auth/candidate-signup/route": "app/api/auth/candidate-signup/route.js",
-  "/api/auth/candidate-login/route": "app/api/auth/candidate-login/route.js",
-  "/page": "app/page.js",
-  "/(auth)/candidate-signup/page": "app/(auth)/candidate-signup/page.js",
-  "/(auth)/candidate-login/page": "app/(auth)/candidate-login/page.js",
-  "/(auth)/login/page": "app/(auth)/login/page.js",
-  "/(protected)/candidate-dashboard/page": "app/(protected)/candidate-dashboard/page.js"
+  "/page": "app/page.js"
 }
