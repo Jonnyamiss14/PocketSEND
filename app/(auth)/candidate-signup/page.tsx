@@ -17,6 +17,8 @@ export default function CandidateSignupPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordError, setPasswordError] = useState('')
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
@@ -55,17 +57,31 @@ export default function CandidateSignupPage() {
         })
       })
 
-      const result = await response.json()
+      const data = await response.json()
 
-      if (!result.success) {
-        toast.error(result.error || 'Signup failed')
-        return
+      if (response.ok) {
+        setError('')
+        setSuccess('Account created successfully! Redirecting to login...')
+        
+        // Clear form
+        setFirstName('')
+        setLastName('')
+        setEmail('')
+        setMobileNumber('')
+        setPassword('')
+        setConfirmPassword('')
+        
+        // Redirect to login after 2 seconds
+        setTimeout(() => {
+          router.push('/candidate-login')
+        }, 2000)
+      } else {
+        setError(data.error || 'Failed to create account')
+        setSuccess('')
       }
-
-      toast.success('Account created successfully!')
-      router.push('/candidate-login')
     } catch (error) {
-      toast.error('An unexpected error occurred')
+      setError('An unexpected error occurred')
+      setSuccess('')
     } finally {
       setLoading(false)
     }
@@ -163,6 +179,14 @@ export default function CandidateSignupPage() {
 
             {passwordError && (
               <p className="text-sm text-red-600">{passwordError}</p>
+            )}
+
+            {error && (
+              <p className="text-sm text-red-600">{error}</p>
+            )}
+
+            {success && (
+              <p className="text-sm text-green-600">{success}</p>
             )}
 
             <Button

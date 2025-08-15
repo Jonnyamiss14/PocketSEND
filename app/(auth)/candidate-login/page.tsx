@@ -12,6 +12,7 @@ import toast from 'react-hot-toast'
 export default function CandidateLoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
@@ -30,15 +31,17 @@ export default function CandidateLoginPage() {
 
       const data = await response.json()
 
-      if (!response.ok) {
-        toast.error(data.error || 'Login failed')
-        return
+      if (response.ok) {
+        setError('')
+        console.log('Login successful, redirecting...')
+        
+        // Redirect to dashboard
+        router.push(data.redirectTo || '/candidate-dashboard')
+      } else {
+        setError(data.error || 'Login failed')
       }
-
-      toast.success('Login successful!')
-      router.push('/candidate-dashboard')
     } catch (error) {
-      toast.error('An unexpected error occurred')
+      setError('An unexpected error occurred')
     } finally {
       setLoading(false)
     }
@@ -80,6 +83,10 @@ export default function CandidateLoginPage() {
                 disabled={loading}
               />
             </div>
+
+            {error && (
+              <p className="text-sm text-red-600">{error}</p>
+            )}
 
             <Button
               type="submit"
