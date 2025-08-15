@@ -50,8 +50,9 @@ export const candidates = pgTable("candidates", {
   id: uuid("id").primaryKey().default(sql`uuid_generate_v4()`),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
-  email: text("email"),
+  email: text("email").notNull().unique(),
   phone: text("phone").notNull(),
+  passwordHash: text("password_hash").notNull(),
   dateOfBirth: date("date_of_birth"),
   address: text("address"),
   emergencyContactName: text("emergency_contact_name"),
@@ -60,8 +61,6 @@ export const candidates = pgTable("candidates", {
   dbsExpiryDate: date("dbs_expiry_date"),
   qualifications: jsonb("qualifications").default(sql`'[]'`),
   experienceYears: integer("experience_years").default(0),
-  experienceLevel: text("experience_level").default('new'), // Added for candidate signup
-  confidenceLevel: integer("confidence_level").default(30), // Added for candidate signup
   specializations: text("specializations").array().default(sql`'{}'`),
   availability: text("availability").default('full_time'),
   transportMethod: text("transport_method"),
@@ -124,9 +123,8 @@ export const insertCandidateSignupSchema = insertCandidateSchema.pick({
   lastName: true,
   email: true,
   phone: true,
-  experienceLevel: true,
 }).extend({
-  agencyCode: z.string().optional(),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 export const insertAuthTokenSchema = createInsertSchema(authTokens).omit({

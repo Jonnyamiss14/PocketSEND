@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,73 +10,33 @@ import { Label } from '@/components/ui/label'
 import toast from 'react-hot-toast'
 
 export default function CandidateLoginPage() {
-  const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [sent, setSent] = useState(false)
-  const searchParams = useSearchParams()
+  const router = useRouter()
 
-  useEffect(() => {
-    const error = searchParams.get('error')
-    if (error) {
-      switch (error) {
-        case 'invalid_token':
-          toast.error('Invalid magic link. Please request a new one.')
-          break
-        case 'expired_token':
-          toast.error('Magic link has expired. Please request a new one.')
-          break
-        case 'token_used':
-          toast.error('This magic link has already been used.')
-          break
-        case 'verification_failed':
-          toast.error('Verification failed. Please try again.')
-          break
-        default:
-          toast.error('An error occurred. Please try again.')
-      }
-    }
-  }, [searchParams])
-
-  const handleSendMagicLink = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      const response = await fetch('/api/auth/magic-link', {
+      const response = await fetch('/api/auth/candidate-login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ email, password }),
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        toast.error(data.message || 'Failed to send magic link')
+        toast.error(data.error || 'Login failed')
         return
       }
 
-      setSent(true)
-      
-      // In development, show the debug link
-      if (data.debug_link && process.env.NODE_ENV === 'development') {
-        toast.success(
-          <div>
-            <p>Magic link generated!</p>
-            <a 
-              href={data.debug_link} 
-              className="text-blue-500 underline text-sm"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Click here to test (Dev only)
-            </a>
-          </div>
-        )
-      } else {
-        toast.success('Magic link sent! Check your WhatsApp')
-      }
+      toast.success('Login successful!')
+      router.push('/candidate-dashboard')
     } catch (error) {
       toast.error('An unexpected error occurred')
     } finally {
@@ -84,58 +44,41 @@ export default function CandidateLoginPage() {
     }
   }
 
-  if (sent) {
-    return (
-      <div className="min-h-screen flex items-center justify-center px-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl text-teal-600">Check Your WhatsApp</CardTitle>
-            <CardDescription>
-              We've sent a magic link to {phone}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-gray-600 mb-4">
-              Click the link in your WhatsApp message to access your preparation materials.
-            </p>
-            <Button
-              onClick={() => setSent(false)}
-              variant="outline"
-              className="border-teal-600 text-teal-600 hover:bg-teal-50"
-            >
-              Send Another Link
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-teal-50 to-white">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl text-teal-600">Candidate Access</CardTitle>
+          <CardTitle className="text-2xl text-teal-600">Candidate Sign In</CardTitle>
           <CardDescription>
-            Enter your phone number to receive a secure access link
+            Access your SEN preparation materials
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSendMagicLink} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <Label htmlFor="phone">Phone Number</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+44 7700 900000"
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your.email@example.com"
                 required
                 disabled={loading}
               />
-              <p className="text-sm text-gray-500 mt-1">
-                We'll send you a secure link via WhatsApp
-              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                required
+                disabled={loading}
+              />
             </div>
 
             <Button
@@ -143,12 +86,18 @@ export default function CandidateLoginPage() {
               className="w-full bg-teal-600 hover:bg-teal-700"
               disabled={loading}
             >
-              {loading ? 'Sending...' : 'Send Magic Link'}
+              {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
 
-          <div className="mt-4 text-center">
-            <Link href="/" className="text-sm text-teal-600 hover:underline">
+          <div className="mt-6 text-center space-y-2">
+            <Link href="/candidate-signup" className="block text-sm text-teal-600 hover:underline">
+              Don't have an account? Sign up
+            </Link>
+            <Link href="/login" className="block text-sm text-gray-600 hover:underline">
+              Are you an agency? Sign in here
+            </Link>
+            <Link href="/" className="block text-sm text-gray-600 hover:underline">
               ← Back to home
             </Link>
           </div>

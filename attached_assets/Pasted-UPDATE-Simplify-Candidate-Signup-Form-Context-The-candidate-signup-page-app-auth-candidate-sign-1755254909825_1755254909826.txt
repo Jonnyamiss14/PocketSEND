@@ -1,0 +1,152 @@
+UPDATE: Simplify Candidate Signup Form
+Context
+The candidate signup page (/app/(auth)/candidate-signup/page.tsx) needs to be simplified. We're removing the experience level dropdown and the Select component dependency.
+Required Changes to Candidate Signup Form
+Update the signup form to include only these fields:
+
+First Name (text input)
+Last Name (text input)
+Email (email input)
+Mobile Number (tel input)
+Password (password input)
+Confirm Password (password input - must match password)
+
+Implementation Requirements
+1. Remove Select Component Import
+Remove the following import from /app/(auth)/candidate-signup/page.tsx:
+typescriptimport { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+2. Update Form Fields
+The form should only contain:
+
+First Name field (required)
+Last Name field (required)
+Email field (required, email validation)
+Mobile Number field (required, phone format validation)
+Password field (required, minimum 8 characters)
+Confirm Password field (required, must match password)
+
+3. Remove Experience Level
+
+Remove any experience level state variables
+Remove the Select dropdown component from the form
+Remove experience level from the form submission data
+Remove experience level from database schema if present
+
+4. Add Password Confirmation Logic
+typescriptconst [password, setPassword] = useState('')
+const [confirmPassword, setConfirmPassword] = useState('')
+const [passwordError, setPasswordError] = useState('')
+
+// Validation logic
+const validatePasswords = () => {
+  if (password !== confirmPassword) {
+    setPasswordError('Passwords do not match')
+    return false
+  }
+  if (password.length < 8) {
+    setPasswordError('Password must be at least 8 characters')
+    return false
+  }
+  setPasswordError('')
+  return true
+}
+Form Structure Example
+typescript<form onSubmit={handleSubmit}>
+  <div className="grid gap-4">
+    <div className="grid grid-cols-2 gap-4">
+      <Input
+        placeholder="First Name"
+        value={firstName}
+        onChange={(e) => setFirstName(e.target.value)}
+        required
+      />
+      <Input
+        placeholder="Last Name"
+        value={lastName}
+        onChange={(e) => setLastName(e.target.value)}
+        required
+      />
+    </div>
+    
+    <Input
+      type="email"
+      placeholder="Email"
+      value={email}
+      onChange={(e) => setEmail(e.target.value)}
+      required
+    />
+    
+    <Input
+      type="tel"
+      placeholder="Mobile Number"
+      value={mobileNumber}
+      onChange={(e) => setMobileNumber(e.target.value)}
+      required
+    />
+    
+    <Input
+      type="password"
+      placeholder="Password (min 8 characters)"
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+      required
+    />
+    
+    <Input
+      type="password"
+      placeholder="Confirm Password"
+      value={confirmPassword}
+      onChange={(e) => setConfirmPassword(e.target.value)}
+      required
+    />
+    
+    {passwordError && (
+      <p className="text-sm text-red-600">{passwordError}</p>
+    )}
+    
+    <Button type="submit" className="w-full">
+      Sign Up
+    </Button>
+  </div>
+</form>
+Database Schema Update
+Ensure the candidate table/model only includes:
+
+id
+firstName
+lastName
+email
+mobileNumber
+passwordHash (hashed password)
+createdAt
+updatedAt
+
+Remove any experienceLevel field if it exists.
+Testing Steps After Implementation
+
+Navigate to signup page: Go to /candidate-signup
+Test form validation:
+
+Try submitting with empty fields (should show required field errors)
+Enter mismatched passwords (should show error message)
+Enter password less than 8 characters (should show error message)
+
+
+Test successful signup:
+
+Fill all fields correctly with matching passwords
+Submit form
+Verify candidate record is created in database
+Check that magic link is generated (in development console)
+
+
+
+Success Criteria
+✅ No Select component import errors
+✅ Form only contains: First Name, Last Name, Email, Mobile Number, Password, Confirm Password
+✅ Password confirmation works correctly
+✅ Form validates all required fields
+✅ Candidate record is created successfully without experience level
+✅ Magic link authentication still works
+Note for Replit Agent
+This simplification removes the need for the Select component entirely, eliminating the previous error. The signup form now follows a standard pattern with just essential user information. Make sure to update both the frontend form and any backend/database schemas to remove the experience level field completely.
