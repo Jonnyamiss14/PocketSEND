@@ -4,8 +4,7 @@ import { NextResponse } from 'next/server'
 
 export async function GET() {
   try {
-    const cookieStore = cookies()
-    const supabase = createClient(cookieStore)
+    const supabase = await createClient()
 
     // First, let's check what tables exist
     const { data: tables, error: tablesError } = await supabase
@@ -40,8 +39,7 @@ export async function GET() {
 // This will disable RLS temporarily for testing
 export async function POST() {
   try {
-    const cookieStore = cookies()
-    const supabase = createClient(cookieStore)
+    const supabase = await createClient()
 
     // Create a simple test without RLS
     const { data, error } = await supabase

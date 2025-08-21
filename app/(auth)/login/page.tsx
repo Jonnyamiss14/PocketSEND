@@ -41,7 +41,7 @@ export default function LoginPage() {
 
       if (data.user) {
         toast.success('Login successful!')
-        router.push('/dashboard')
+        router.push('/recruiter-dashboard')
         router.refresh()
       }
     } catch (error) {

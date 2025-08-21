@@ -18,7 +18,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Check if user is authenticated for protected routes
-  if (pathname.startsWith('/dashboard') || pathname.startsWith('/portal')) {
+  if (pathname.startsWith('/dashboard') || pathname.startsWith('/portal') || pathname.startsWith('/recruiter-dashboard')) {
     const supabaseResponse = await fetch(
       new URL('/api/auth/user', request.url),
       {

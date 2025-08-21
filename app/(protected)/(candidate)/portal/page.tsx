@@ -3,13 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 
 interface PortalPageProps {
-  searchParams: {
+  searchParams: Promise<{
     candidate_id?: string
     verified?: string
-  }
+  }>
 }
 
 export default async function PortalPage({ searchParams }: PortalPageProps) {
+  const params = await searchParams
   const supabase = await createClient()
   
   // For authenticated candidates, use their user info
@@ -19,7 +20,7 @@ export default async function PortalPage({ searchParams }: PortalPageProps) {
 
   // For magic link access, get candidate info
   let candidateInfo = null
-  if (searchParams.candidate_id && searchParams.verified === 'true') {
+  if (params.candidate_id && params.verified === 'true') {
     const { data: candidate } = await supabase
       .from('candidates')
       .select(`
@@ -34,7 +35,7 @@ export default async function PortalPage({ searchParams }: PortalPageProps) {
           )
         )
       `)
-      .eq('id', searchParams.candidate_id)
+      .eq('id', params.candidate_id)
       .single()
     
     candidateInfo = candidate
@@ -44,7 +45,7 @@ export default async function PortalPage({ searchParams }: PortalPageProps) {
     ? `${candidateInfo.first_name} ${candidateInfo.last_name}`
     : user?.email || 'Candidate'
 
-  const agencyName = candidateInfo?.candidate_agencies?.[0]?.agencies?.name
+  const agencyName = candidateInfo?.candidate_agencies?.[0]?.agencies?.[0]?.name
 
   return (
     <div className="container mx-auto px-4 py-8">

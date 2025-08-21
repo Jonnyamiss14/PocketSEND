@@ -1,5 +1,1 @@
-{
-  "node": {},
-  "edge": {},
-  "encryptionKey": "XSnalXXS9OwzOKhBopwgert8xUzgBO81uXrV36TukLg="
-}
+{"node":{"40648e3400da15341eac50e439f7f4003a3d2e0d29":{"workers":{"app/(protected)/recruiter-dashboard/page":{"moduleId":"51538","async":false}},"layer":{"app/(protected)/recruiter-dashboard/page":"action-browser"}},"407bec97d1157aa2d0da69107b209642fa14b36f97":{"workers":{"app/(protected)/recruiter-dashboard/page":{"moduleId":"51538","async":false}},"layer":{"app/(protected)/recruiter-dashboard/page":"action-browser"}},"609d3d0af45137f4a56f6cf75f477c0d2f64210f0c":{"workers":{"app/(protected)/recruiter-dashboard/page":{"moduleId":"51538","async":false}},"layer":{"app/(protected)/recruiter-dashboard/page":"action-browser"}}},"edge":{},"encryptionKey":"d31ZL8Iy1a85xL+ECL/MnFxVhndljn6W3NxgcC+U7L4="}
